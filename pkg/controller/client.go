@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 
 	"github.com/go-logr/logr"
@@ -56,7 +57,7 @@ func (c *controllerClient) Endpoint() string {
 }
 
 // Handle processes and sends log to the logging backend.
-func (c *controllerClient) Handle(log types.OutputEntry) error {
+func (c *controllerClient) Handle(ctx context.Context, log types.OutputEntry) error {
 	var combineErr error
 
 	// Because we do not use thread safe methods here we just copy the variables
@@ -64,12 +65,12 @@ func (c *controllerClient) Handle(log types.OutputEntry) error {
 	sendToShoot, sendToSeed := !c.shootTarget.mute, !c.seedTarget.mute
 
 	if sendToShoot {
-		if err := c.shootTarget.client.Handle(log); err != nil {
+		if err := c.shootTarget.client.Handle(ctx, log); err != nil {
 			combineErr = errors.Join(combineErr, err)
 		}
 	}
 	if sendToSeed {
-		if err := c.seedTarget.client.Handle(log); err != nil {
+		if err := c.seedTarget.client.Handle(ctx, log); err != nil {
 			combineErr = errors.Join(combineErr, err)
 		}
 	}
@@ -78,13 +79,13 @@ func (c *controllerClient) Handle(log types.OutputEntry) error {
 }
 
 // Stop the client.
-func (c *controllerClient) Stop() {
-	c.shootTarget.client.Stop()
+func (c *controllerClient) Stop(ctx context.Context) {
+	c.shootTarget.client.Stop(ctx)
 }
 
 // StopWait stops the client waiting all saved logs to be sent.
-func (c *controllerClient) StopWait() {
-	c.shootTarget.client.StopWait()
+func (c *controllerClient) StopWait(ctx context.Context) {
+	c.shootTarget.client.StopWait(ctx)
 }
 
 // SetState manages the mute flags for shoot and seed targets.

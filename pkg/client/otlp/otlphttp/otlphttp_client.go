@@ -6,7 +6,6 @@ package otlphttp
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -33,8 +32,6 @@ type Client struct {
 	meterProvider  *sdkmetric.MeterProvider
 	metricsSetup   *otlp.MetricsSetup
 	otlLogger      otlplog.Logger
-	ctx            context.Context
-	cancel         context.CancelFunc
 	limiter        *rate.Limiter // Rate limiter for throttling
 	metrics        *metrics.FluentBitGardenerMetrics
 }
@@ -43,27 +40,20 @@ var _ api.Output = &Client{}
 
 // New creates a new OTLP HTTP client with dque batch processor
 func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.FluentBitGardenerMetrics, metricsSetup *otlp.MetricsSetup) (*Client, error) {
-	// Use the provided context with cancel capability
-	clientCtx, cancel := context.WithCancel(ctx)
-
 	// Build blocking OTLP HTTP exporter configuration
 	configBuilder := NewConfigBuilder(cfg)
 	exporterOpts := configBuilder.Build()
 
 	// Create blocking OTLP HTTP exporter
-	exporter, err := otlploghttp.New(clientCtx, exporterOpts...)
+	exporter, err := otlploghttp.New(ctx, exporterOpts...)
 	if err != nil {
-		cancel()
-
 		return nil, fmt.Errorf("failed to create OTLP HTTP exporter: %w", err)
 	}
 
 	// Create batch processor using factory
 	processorFactory := otlp.NewBatchProcessorFactory(logger, m)
-	batchProcessor, err := processorFactory.Create(clientCtx, cfg, exporter, "otlp-http")
+	batchProcessor, err := processorFactory.Create(ctx, cfg, exporter, "otlp-http")
 	if err != nil {
-		cancel()
-
 		return nil, fmt.Errorf("failed to create batch processor: %w", err)
 	}
 
@@ -103,8 +93,6 @@ func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.
 		meterProvider:  metricsSetupProvider(metricsSetup),
 		metricsSetup:   metricsSetup,
 		otlLogger:      loggerProvider.Logger(otlp.PluginName, scopeOptions...),
-		ctx:            clientCtx,
-		cancel:         cancel,
 		limiter:        limiter,
 		metrics:        m,
 	}
@@ -118,10 +106,10 @@ func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.
 }
 
 // Handle processes and sends the log entry via OTLP HTTP
-func (c *Client) Handle(entry types.OutputEntry) error {
-	// Check if the client's context is cancelled
-	if c.ctx.Err() != nil {
-		return c.ctx.Err()
+func (c *Client) Handle(ctx context.Context, entry types.OutputEntry) error {
+	// Check if the caller's context is cancelled
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 
 	// Check rate limit if throttling is enabled
@@ -144,8 +132,8 @@ func (c *Client) Handle(entry types.OutputEntry) error {
 		WithAttributes(entry).
 		Build()
 
-	// Emit the log record using the client's context
-	c.otlLogger.Emit(c.ctx, logRecord)
+	// Emit the log record using the caller's context
+	c.otlLogger.Emit(ctx, logRecord)
 
 	// Increment the output logs counter
 	c.metrics.OutputClientLogs.WithLabelValues(c.endpoint).Inc()
@@ -154,13 +142,8 @@ func (c *Client) Handle(entry types.OutputEntry) error {
 }
 
 // Stop shuts down the client immediately
-func (c *Client) Stop() {
+func (c *Client) Stop(ctx context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s", componentOTLPHTTPName))
-	c.cancel()
-
-	// Create timeout context from background, not from the cancelled c.ctx
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	if err := c.loggerProvider.Shutdown(ctx); err != nil {
 		c.logger.Error(err, "error during logger provider shutdown")
@@ -176,13 +159,8 @@ func (c *Client) Stop() {
 }
 
 // StopWait stops the client and waits for all logs to be sent
-func (c *Client) StopWait() {
+func (c *Client) StopWait(ctx context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s with wait", componentOTLPHTTPName))
-	c.cancel()
-
-	// Create timeout context from background, not from the cancelled c.ctx
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	if err := c.loggerProvider.ForceFlush(ctx); err != nil {
 		c.logger.Error(err, "error during logger provider force flush")

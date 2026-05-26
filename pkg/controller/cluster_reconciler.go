@@ -43,6 +43,28 @@ func Scheme() *runtime.Scheme {
 	return scheme
 }
 
+// shutdownTimeout bounds Stop() calls on api.Output clients.
+const shutdownTimeout = time.Second
+
+// stopWaitTimeout bounds StopWait() calls on api.Output clients.
+const stopWaitTimeout = 30 * time.Second
+
+// stopWithTimeout calls Stop on the client with a bounded background context.
+// Used in shutdown paths where the caller has no live ctx to pass through.
+func stopWithTimeout(c api.Output) {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	c.Stop(ctx)
+}
+
+// stopWaitWithTimeout calls StopWait on the client with a bounded background context.
+// Used in shutdown paths where the caller has no live ctx to pass through.
+func stopWaitWithTimeout(c api.Output) {
+	ctx, cancel := context.WithTimeout(context.Background(), stopWaitTimeout)
+	defer cancel()
+	c.StopWait(ctx)
+}
+
 // clusterReconciler reconciles Cluster objects using controller-runtime
 type clusterReconciler struct {
 	k8sclient.Client
@@ -76,7 +98,7 @@ func newClusterController(ctx context.Context, conf *config.Config, l logr.Logge
 
 	restConfig, err := getRestConfig()
 	if err != nil {
-		seedClient.StopWait()
+		stopWaitWithTimeout(seedClient)
 
 		return nil, fmt.Errorf("failed to get REST config: %w", err)
 	}
@@ -102,7 +124,7 @@ func newClusterController(ctx context.Context, conf *config.Config, l logr.Logge
 	})
 	if err != nil {
 		cancel()
-		seedClient.StopWait()
+		stopWaitWithTimeout(seedClient)
 
 		return nil, fmt.Errorf("failed to create manager: %w", err)
 	}
@@ -126,7 +148,7 @@ func newClusterController(ctx context.Context, conf *config.Config, l logr.Logge
 		Named(fmt.Sprintf("cluster-%s", uuid.NewUUID())).
 		Complete(reconciler); err != nil {
 		cancel()
-		seedClient.StopWait()
+		stopWaitWithTimeout(seedClient)
 
 		return nil, fmt.Errorf("failed to create controller: %w", err)
 	}
@@ -146,7 +168,7 @@ func newClusterController(ctx context.Context, conf *config.Config, l logr.Logge
 
 	if !mgr.GetCache().WaitForCacheSync(syncCtx) {
 		cancel()
-		seedClient.StopWait()
+		stopWaitWithTimeout(seedClient)
 
 		return nil, errors.New("failed to wait for cache sync within timeout")
 	}
@@ -279,13 +301,13 @@ func (r *clusterReconciler) Stop() {
 
 	for _, cl := range r.clients {
 		if cl != nil {
-			cl.StopWait()
+			stopWaitWithTimeout(cl)
 		}
 	}
 	r.clients = nil
 
 	if r.seedClient != nil {
-		r.seedClient.StopWait()
+		stopWaitWithTimeout(r.seedClient)
 	}
 
 	r.logger.Info("controller stopped")
@@ -353,14 +375,14 @@ func (r *clusterReconciler) createClient(clusterName string, shoot *gardenercore
 	defer r.lock.Unlock()
 
 	if r.isStopped() {
-		c.StopWait()
+		stopWaitWithTimeout(c)
 
 		return
 	}
 
 	if existingClient, exists := r.clients[clusterName]; exists && existingClient != nil {
 		r.logger.Info("controller client already exists, discarding duplicate", "cluster", clusterName)
-		c.StopWait()
+		stopWaitWithTimeout(c)
 		r.updateClientState(existingClient, shoot)
 
 		return
@@ -387,7 +409,7 @@ func (r *clusterReconciler) deleteClient(clusterName string) {
 	if ok && c != nil {
 		delete(r.clients, clusterName)
 		r.metrics.Clients.WithLabelValues(targets.Shoot.String()).Dec()
-		go c.Stop() // TODO: check
+		go stopWithTimeout(c) // TODO: check
 		r.logger.Info("client deleted", "cluster", clusterName)
 	}
 }

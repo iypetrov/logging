@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"time"
 
 	"github.com/go-logr/logr"
 
@@ -188,7 +189,7 @@ func (l *logging) SendRecord(log types.OutputEntry) error {
 	}
 
 	// Client uses its own lifecycle context
-	err := c.Handle(log)
+	err := c.Handle(l.ctx, log)
 	if err == nil {
 		return nil
 	}
@@ -206,7 +207,11 @@ func (l *logging) Close() {
 	// Cancel the plugin context first to signal all operations to stop
 	l.cancel()
 
-	l.seedClient.StopWait()
+	// Bound shutdown with a fresh context: the plugin's own ctx is already cancelled.
+	stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	l.seedClient.StopWait(stopCtx)
 	if l.controller != nil {
 		l.controller.Stop()
 	}

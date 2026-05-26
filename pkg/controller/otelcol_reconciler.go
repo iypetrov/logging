@@ -297,14 +297,14 @@ func (r *otelCollectorReconciler) createClient(namespace string) {
 	defer r.lock.Unlock()
 
 	if r.isStopped() {
-		outputClient.StopWait()
+		stopWaitWithTimeout(outputClient)
 
 		return
 	}
 
 	if _, exists := r.clients[namespace]; exists {
 		r.logger.Info("client already exists for namespace, discarding duplicate", "namespace", namespace)
-		outputClient.StopWait()
+		stopWaitWithTimeout(outputClient)
 
 		return
 	}
@@ -327,7 +327,7 @@ func (r *otelCollectorReconciler) deleteClient(namespace string) {
 	if ok && c != nil {
 		delete(r.clients, namespace)
 		r.metrics.Clients.WithLabelValues(targets.Shoot.String()).Dec()
-		go c.Stop()
+		go stopWithTimeout(c)
 		r.logger.Info("client deleted for namespace", "namespace", namespace)
 	}
 }
@@ -383,7 +383,7 @@ func (r *otelCollectorReconciler) Stop() {
 
 	for _, cl := range r.clients {
 		if cl != nil {
-			cl.StopWait()
+			stopWaitWithTimeout(cl)
 		}
 	}
 	r.clients = nil

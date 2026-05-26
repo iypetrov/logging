@@ -21,7 +21,6 @@ const componentNoopName = "noop"
 // Client is an implementation of Output that discards all records
 // but keeps metrics and increments counters
 type Client struct {
-	ctx      context.Context
 	logger   logr.Logger
 	endpoint string
 	metrics  *metrics.FluentBitGardenerMetrics
@@ -30,9 +29,8 @@ type Client struct {
 var _ api.Output = &Client{}
 
 // New creates a new NoopClient that discards all records
-func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.FluentBitGardenerMetrics) (*Client, error) {
+func New(_ context.Context, cfg config.Config, logger logr.Logger, m *metrics.FluentBitGardenerMetrics) (*Client, error) {
 	client := &Client{
-		ctx:      ctx,
 		endpoint: cfg.OTLPConfig.Endpoint,
 		logger:   logger.WithValues("endpoint", cfg.OTLPConfig.Endpoint),
 		metrics:  m,
@@ -44,7 +42,7 @@ func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.
 }
 
 // Handle processes and discards the log entry while incrementing metrics
-func (c *Client) Handle(_ types.OutputEntry) error {
+func (c *Client) Handle(_ context.Context, _ types.OutputEntry) error {
 	// Increment the dropped logs counter since we're discarding the record
 	c.metrics.DroppedLogs.WithLabelValues(c.endpoint, "noop").Inc()
 
@@ -53,12 +51,12 @@ func (c *Client) Handle(_ types.OutputEntry) error {
 }
 
 // Stop shuts down the client immediately
-func (c *Client) Stop() {
+func (c *Client) Stop(_ context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s", componentNoopName))
 }
 
 // StopWait stops the client - since this is a no-op client, it's the same as Stop
-func (c *Client) StopWait() {
+func (c *Client) StopWait(_ context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s with wait", componentNoopName))
 }
 

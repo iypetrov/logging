@@ -35,7 +35,7 @@ func (*fakeOutputClient) Endpoint() string {
 	return "http://localhost"
 }
 
-func (c *fakeOutputClient) Handle(_ pkgtypes.OutputEntry) error {
+func (c *fakeOutputClient) Handle(_ context.Context, _ pkgtypes.OutputEntry) error {
 	if c.isStopped {
 		return errors.New("client has been stopped")
 	}
@@ -43,11 +43,11 @@ func (c *fakeOutputClient) Handle(_ pkgtypes.OutputEntry) error {
 	return nil
 }
 
-func (c *fakeOutputClient) Stop() {
+func (c *fakeOutputClient) Stop(_ context.Context) {
 	c.isStopped = true
 }
 
-func (c *fakeOutputClient) StopWait() {
+func (c *fakeOutputClient) StopWait(_ context.Context) {
 	c.isStopped = true
 }
 

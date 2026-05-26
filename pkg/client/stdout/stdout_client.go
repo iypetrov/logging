@@ -21,7 +21,6 @@ const componentStdoutName = "stdout"
 
 // Client is an implementation of Output that writes all records to stdout
 type Client struct {
-	ctx      context.Context
 	logger   logr.Logger
 	endpoint string
 	metrics  *metrics.FluentBitGardenerMetrics
@@ -30,9 +29,8 @@ type Client struct {
 var _ api.Output = &Client{}
 
 // New creates a new StdoutClient that writes all records to stdout
-func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.FluentBitGardenerMetrics) (*Client, error) {
+func New(_ context.Context, cfg config.Config, logger logr.Logger, m *metrics.FluentBitGardenerMetrics) (*Client, error) {
 	client := &Client{
-		ctx:      ctx,
 		endpoint: cfg.OTLPConfig.Endpoint,
 		logger:   logger.WithValues("endpoint", cfg.OTLPConfig.Endpoint),
 		metrics:  m,
@@ -44,7 +42,7 @@ func New(ctx context.Context, cfg config.Config, logger logr.Logger, m *metrics.
 }
 
 // Handle processes and writes the log entry to stdout while incrementing metrics
-func (c *Client) Handle(entry types.OutputEntry) error {
+func (c *Client) Handle(_ context.Context, entry types.OutputEntry) error {
 	// Create a map with timestamp and record fields
 	output := map[string]any{
 		"timestamp": entry.Timestamp.Format("2006-01-02T15:04:05.000000Z07:00"),
@@ -75,12 +73,12 @@ func (c *Client) Handle(entry types.OutputEntry) error {
 }
 
 // Stop shuts down the client immediately
-func (c *Client) Stop() {
+func (c *Client) Stop(_ context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s", componentStdoutName))
 }
 
 // StopWait stops the client - since this is a stdout client, it's the same as Stop
-func (c *Client) StopWait() {
+func (c *Client) StopWait(_ context.Context) {
 	c.logger.V(2).Info(fmt.Sprintf("stopping %s with wait", componentStdoutName))
 }
 
