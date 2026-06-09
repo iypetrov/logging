@@ -99,7 +99,7 @@ var _ = Describe("Controller Client", func() {
 		ctlClient.seedTarget.mute = args.config.muteSeedClient
 		ctlClient.shootTarget.mute = args.config.muteShootClient
 		for _, entry := range args.input {
-			err := ctlClient.Handle(entry)
+			err := ctlClient.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		}
 
@@ -255,7 +255,7 @@ var _ = Describe("Controller Client", func() {
 	Describe("#Stop", func() {
 		It("Should stop immediately without errors", func() {
 			// Stop should not panic or error
-			ctlClient.Stop()
+			ctlClient.Stop(context.Background())
 
 			// Since NoopClient doesn't enforce stopping behavior (it's a no-op),
 			// we just verify that Stop() can be called without issues
@@ -271,11 +271,11 @@ var _ = Describe("Controller Client", func() {
 				Timestamp: time.Now(),
 				Record:    map[string]any{"msg": "test before graceful stop"},
 			}
-			err := ctlClient.Handle(entry)
+			err := ctlClient.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 
 			// StopWait should not panic or error
-			ctlClient.StopWait()
+			ctlClient.StopWait(context.Background())
 
 			// Verify the log was processed
 			finalShootDropped := testutil.ToFloat64(testMetrics.DroppedLogs.WithLabelValues("shoot-endpoint:4317", "noop"))
@@ -307,7 +307,7 @@ var _ = Describe("Controller Client", func() {
 							Timestamp: time.Now(),
 							Record:    map[string]any{"msg": fmt.Sprintf("concurrent log from goroutine %d, message %d", id, j)},
 						}
-						err := ctlClient.Handle(entry)
+						err := ctlClient.Handle(context.Background(), entry)
 						Expect(err).ToNot(HaveOccurred())
 					}
 				}(i)
@@ -360,7 +360,7 @@ var _ = Describe("Controller Client", func() {
 							Timestamp: time.Now(),
 							Record:    map[string]any{"msg": fmt.Sprintf("concurrent log during state changes %d-%d", id, j)},
 						}
-						_ = ctlClient.Handle(entry)
+						_ = ctlClient.Handle(context.Background(), entry)
 					}
 				}(i)
 			}
@@ -396,7 +396,7 @@ var _ = Describe("Controller Client", func() {
 							Timestamp: time.Now(),
 							Record:    map[string]any{"msg": fmt.Sprintf("concurrent log before stop %d-%d", id, j)},
 						}
-						_ = ctlClient.Handle(entry)
+						_ = ctlClient.Handle(context.Background(), entry)
 						time.Sleep(1 * time.Millisecond)
 					}
 				}(i)
@@ -406,7 +406,7 @@ var _ = Describe("Controller Client", func() {
 			go func() {
 				defer wg.Done()
 				time.Sleep(10 * time.Millisecond)
-				ctlClient.Stop()
+				ctlClient.Stop(context.Background())
 			}()
 
 			wg.Wait()

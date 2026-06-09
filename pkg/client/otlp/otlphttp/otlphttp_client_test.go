@@ -59,7 +59,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should set the correct endpoint", func() {
@@ -68,7 +68,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client.Endpoint()).To(Equal("localhost:4318"))
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should handle TLS configuration", func() {
@@ -80,7 +80,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should handle custom headers", func() {
@@ -94,7 +94,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should handle compression configuration", func() {
@@ -105,7 +105,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should handle retry configuration", func() {
@@ -120,7 +120,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 	})
 
@@ -135,7 +135,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 
 		AfterEach(func() {
 			if client != nil {
-				client.Stop()
+				client.Stop(context.Background())
 			}
 		})
 
@@ -148,7 +148,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -164,7 +164,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -177,7 +177,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -190,7 +190,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -211,7 +211,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -231,7 +231,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -248,7 +248,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -261,7 +261,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -278,7 +278,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -291,7 +291,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -313,7 +313,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -327,7 +327,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 					},
 				}
 
-				err := client.Handle(entry)
+				err := client.Handle(context.Background(), entry)
 				Expect(err).ToNot(HaveOccurred())
 			}
 		})
@@ -338,7 +338,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			client, err := otlphttp.New(context.Background(), cfg, logger, testMetrics, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			client.Stop()
+			client.Stop(context.Background())
 			// Should not panic or error
 		})
 
@@ -353,20 +353,20 @@ var _ = Describe("OTLPHTTPClient", func() {
 					"log": "test message",
 				},
 			}
-			err = client.Handle(entry)
+			err = client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Stop with wait should flush logs
-			client.StopWait()
+			client.StopWait(context.Background())
 		})
 
 		It("should handle multiple stops gracefully", func() {
 			client, err := otlphttp.New(context.Background(), cfg, logger, testMetrics, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			client.Stop()
+			client.Stop(context.Background())
 			// Second stop should not panic
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should flush pending logs on StopWait", func() {
@@ -382,12 +382,12 @@ var _ = Describe("OTLPHTTPClient", func() {
 						"index": i,
 					},
 				}
-				err = client.Handle(entry)
+				err = client.Handle(context.Background(), entry)
 				Expect(err).ToNot(HaveOccurred())
 			}
 
 			// Stop with wait should flush all pending logs
-			client.StopWait()
+			client.StopWait(context.Background())
 		})
 	})
 
@@ -399,7 +399,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			endpoint := client.Endpoint()
 			Expect(endpoint).To(Equal("localhost:4318"))
 
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should return different endpoints for different configs", func() {
@@ -420,8 +420,8 @@ var _ = Describe("OTLPHTTPClient", func() {
 			Expect(client2.Endpoint()).To(Equal("otlp-collector-2:4318"))
 
 			// Clean up
-			client1.Stop()
-			client2.Stop()
+			client1.Stop(context.Background())
+			client2.Stop(context.Background())
 		})
 	})
 
@@ -431,7 +431,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			testCfg.OTLPConfig.DQueConfig.DQueDir = GinkgoT().TempDir()
 			client, err := otlphttp.New(context.Background(), testCfg, logger, testMetrics, nil)
 			Expect(err).ToNot(HaveOccurred())
-			defer client.Stop()
+			defer client.Stop(context.Background())
 
 			entry := types.OutputEntry{
 				Timestamp: time.Now(),
@@ -447,7 +447,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err = client.Handle(entry)
+			err = client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -456,7 +456,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 			testCfg.OTLPConfig.DQueConfig.DQueDir = GinkgoT().TempDir()
 			client, err := otlphttp.New(context.Background(), testCfg, logger, testMetrics, nil)
 			Expect(err).ToNot(HaveOccurred())
-			defer client.Stop()
+			defer client.Stop(context.Background())
 
 			entry := types.OutputEntry{
 				Timestamp: time.Now(),
@@ -477,7 +477,7 @@ var _ = Describe("OTLPHTTPClient", func() {
 				},
 			}
 
-			err = client.Handle(entry)
+			err = client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

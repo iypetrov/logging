@@ -86,7 +86,7 @@ var _ = Describe("NoopClient", func() {
 				Timestamp: time.Now(),
 				Record:    map[string]any{"msg": "test"},
 			}
-			err := outputClient.Handle(entry)
+			err := outputClient.Handle(context.Background(), entry)
 
 			Expect(err).NotTo(HaveOccurred())
 			afterCount := testutil.ToFloat64(initialMetric)
@@ -103,7 +103,7 @@ var _ = Describe("NoopClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test"},
 				}
-				err := outputClient.Handle(entry)
+				err := outputClient.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -127,7 +127,7 @@ var _ = Describe("NoopClient", func() {
 							Timestamp: time.Now(),
 							Record:    map[string]any{"msg": "test"},
 						}
-						err := outputClient.Handle(entry)
+						err := outputClient.Handle(context.Background(), entry)
 						Expect(err).NotTo(HaveOccurred())
 					}
 					done <- true
@@ -146,27 +146,27 @@ var _ = Describe("NoopClient", func() {
 
 	Describe("Stop and StopWait", func() {
 		It("should stop without errors", func() {
-			Expect(func() { outputClient.Stop() }).NotTo(Panic())
+			Expect(func() { outputClient.Stop(context.Background()) }).NotTo(Panic())
 		})
 
 		It("should stop and wait without errors", func() {
-			Expect(func() { outputClient.StopWait() }).NotTo(Panic())
+			Expect(func() { outputClient.StopWait(context.Background()) }).NotTo(Panic())
 		})
 
 		It("should be safe to call Stop multiple times", func() {
 			Expect(func() {
-				outputClient.Stop()
-				outputClient.Stop()
+				outputClient.Stop(context.Background())
+				outputClient.Stop(context.Background())
 			}).NotTo(Panic())
 		})
 
 		It("should be safe to call Handle after Stop", func() {
-			outputClient.Stop()
+			outputClient.Stop(context.Background())
 			entry := types.OutputEntry{
 				Timestamp: time.Now(),
 				Record:    map[string]any{"msg": "test"},
 			}
-			err := outputClient.Handle(entry)
+			err := outputClient.Handle(context.Background(), entry)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -217,7 +217,7 @@ var _ = Describe("NoopClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test"},
 				}
-				err := client1.Handle(entry)
+				err := client1.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 			for range 3 {
@@ -225,7 +225,7 @@ var _ = Describe("NoopClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test"},
 				}
-				err := client2.Handle(entry)
+				err := client2.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 

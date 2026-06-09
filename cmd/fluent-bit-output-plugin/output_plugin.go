@@ -29,7 +29,6 @@ import (
 	"github.com/gardener/logging/v1/pkg/types"
 )
 
-// TODO(iypetrov): Refactor later to avoid global state + mixed responability of the components
 func init() {
 	app.Init()
 	go func() {

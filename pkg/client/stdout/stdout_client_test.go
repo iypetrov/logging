@@ -100,7 +100,7 @@ var _ = Describe("StdoutClient", func() {
 				Timestamp: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 				Record:    map[string]any{"msg": "test message"},
 			}
-			err := outputClient.Handle(entry)
+			err := outputClient.Handle(context.Background(), entry)
 			Expect(err).NotTo(HaveOccurred())
 
 			afterCount := testutil.ToFloat64(initialMetric)
@@ -133,7 +133,7 @@ var _ = Describe("StdoutClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test", "count": i},
 				}
-				err := outputClient.Handle(entry)
+				err := outputClient.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -152,7 +152,7 @@ var _ = Describe("StdoutClient", func() {
 					},
 				},
 			}
-			err := outputClient.Handle(entry)
+			err := outputClient.Handle(context.Background(), entry)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Close writer and read output
@@ -190,7 +190,7 @@ var _ = Describe("StdoutClient", func() {
 							Timestamp: time.Now(),
 							Record:    map[string]any{"msg": "test", "goroutine": id},
 						}
-						err := outputClient.Handle(entry)
+						err := outputClient.Handle(context.Background(), entry)
 						Expect(err).NotTo(HaveOccurred())
 					}
 					done <- true
@@ -209,27 +209,27 @@ var _ = Describe("StdoutClient", func() {
 
 	Describe("Stop and StopWait", func() {
 		It("should stop without errors", func() {
-			Expect(func() { outputClient.Stop() }).NotTo(Panic())
+			Expect(func() { outputClient.Stop(context.Background()) }).NotTo(Panic())
 		})
 
 		It("should stop and wait without errors", func() {
-			Expect(func() { outputClient.StopWait() }).NotTo(Panic())
+			Expect(func() { outputClient.StopWait(context.Background()) }).NotTo(Panic())
 		})
 
 		It("should be safe to call Stop multiple times", func() {
 			Expect(func() {
-				outputClient.Stop()
-				outputClient.Stop()
+				outputClient.Stop(context.Background())
+				outputClient.Stop(context.Background())
 			}).NotTo(Panic())
 		})
 
 		It("should be safe to call Handle after Stop", func() {
-			outputClient.Stop()
+			outputClient.Stop(context.Background())
 			entry := types.OutputEntry{
 				Timestamp: time.Now(),
 				Record:    map[string]any{"msg": "test"},
 			}
-			err := outputClient.Handle(entry)
+			err := outputClient.Handle(context.Background(), entry)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -280,7 +280,7 @@ var _ = Describe("StdoutClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test"},
 				}
-				err := client1.Handle(entry)
+				err := client1.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 			for range 3 {
@@ -288,7 +288,7 @@ var _ = Describe("StdoutClient", func() {
 					Timestamp: time.Now(),
 					Record:    map[string]any{"msg": "test"},
 				}
-				err := client2.Handle(entry)
+				err := client2.Handle(context.Background(), entry)
 				Expect(err).NotTo(HaveOccurred())
 			}
 

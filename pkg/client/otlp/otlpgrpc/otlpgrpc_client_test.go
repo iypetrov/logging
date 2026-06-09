@@ -59,7 +59,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should set the correct endpoint", func() {
@@ -68,7 +68,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 			Expect(client.Endpoint()).To(Equal("localhost:4317"))
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 
 		It("should handle TLS configuration", func() {
@@ -80,7 +80,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 			Expect(client).ToNot(BeNil())
 
 			// Clean up
-			client.Stop()
+			client.Stop(context.Background())
 		})
 	})
 
@@ -95,7 +95,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 
 		AfterEach(func() {
 			if client != nil {
-				client.Stop()
+				client.Stop(context.Background())
 			}
 		})
 
@@ -108,7 +108,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -124,7 +124,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -144,7 +144,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -160,7 +160,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -173,7 +173,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -186,7 +186,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -202,7 +202,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 				},
 			}
 
-			err := client.Handle(entry)
+			err := client.Handle(context.Background(), entry)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
@@ -212,7 +212,7 @@ var _ = Describe("OTLPGRPCClient", func() {
 			client, err := otlpgrpc.New(context.Background(), cfg, logger, testMetrics, nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			client.Stop()
+			client.Stop(context.Background())
 			// Should not panic or error
 		})
 	})

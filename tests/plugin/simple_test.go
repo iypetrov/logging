@@ -40,12 +40,12 @@ var _ = Describe("Simple Plugin Test", func() {
 			Timestamp: time.Now(),
 			Record:    map[string]any{"msg": "test log"},
 		}
-		err = c.Handle(entry)
+		err = c.Handle(context.Background(), entry)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Test cleanup
-		c.Stop()
-		c.StopWait()
+		c.Stop(context.Background())
+		c.StopWait(context.Background())
 	})
 
 	It("should create a logger with slog backend", func() {
