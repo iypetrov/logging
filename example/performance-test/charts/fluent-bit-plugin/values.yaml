@@ -8,7 +8,7 @@ image:
   imagePullSecrets: []
 
 fluentBit:
-  image: ghcr.io/fluent/fluent-operator/fluent-bit:v4.2.2
+  image: ghcr.io/fluent/fluent-operator/fluent-bit:v5.1.1
 
   livenessProbe:
     failureThreshold: 5
