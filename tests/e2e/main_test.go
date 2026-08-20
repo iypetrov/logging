@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	victoriaLogsImage    = "quay.io/victoriametrics/victoria-logs:v1.43.0"
-	fluentBitImage       = "ghcr.io/fluent/fluent-operator/fluent-bit:v4.2.0"
+	victoriaLogsImage    = "quay.io/victoriametrics/victoria-logs:v1.52.0"
+	fluentBitImage       = "ghcr.io/fluent/fluent-operator/fluent-bit:v5.1.1"
 	fluentBitPluginImage = "fluent-bit-plugin:e2e"
 	eventLoggerImage     = "event-logger:e2e"
 	namespace            = "fluent-bit"
